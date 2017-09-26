@@ -27,7 +27,6 @@ class MainActivity : AppCompatActivity() {
                 firebaseAuth.signOut()
             }
         }
-
         getMyExams()
     }
 
@@ -68,6 +67,11 @@ class MainActivity : AppCompatActivity() {
                     override fun onChildRemoved(p0: DataSnapshot?) {}
                 }
         )
+
+        fab_scan_exam.setOnClickListener {
+            mAuth.signOut()
+            goToLogin()
+        }
     }
 
     private fun checkUserIsStillLogged() {

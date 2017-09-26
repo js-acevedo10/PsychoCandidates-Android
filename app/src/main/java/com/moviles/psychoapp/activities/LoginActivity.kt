@@ -44,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-//        setupFingerprintScanner()
+        setupFingerprintScanner()
 
         lbl_no_account.setOnClickListener {
             startActivity(Intent(this@LoginActivity, RegisterActivity::class.java))
@@ -109,7 +109,7 @@ class LoginActivity : AppCompatActivity() {
 
             //Generate the key//
             keyGenerator!!.generateKey()
-        } catch(e: Exception) {
+        } catch(e: java.lang.Exception) {
             e.printStackTrace()
             throw e
         }

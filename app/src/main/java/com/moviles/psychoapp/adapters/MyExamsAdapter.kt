@@ -27,5 +27,4 @@ class MyExamsAdapter(val items: List<BriefExam>, val layout: Int) : RecyclerView
             itemView.item_me_txt_title.text = item.name
         }
     }
-
 }
