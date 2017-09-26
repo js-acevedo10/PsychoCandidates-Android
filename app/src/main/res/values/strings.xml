@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Psycho App</string>
+    <string name="register_hint_name">Name</string>
+    <string name="register_hint_mail">Email</string>
+    <string name="register_hint_birth">Birthday</string>
+    <string name="register_hint_password">Password</string>
+    <string name="register_btn_register">Continue</string>
+    <string name="login_lbl_no_account">Don\'t have an account? Create one</string>
+    <string name="register_error">Please enter a valid %s.</string>
+    <string name="register_error_blank">Please enter a valid %s.</string>
+    <string name="register_error_long">The %s entered is too long.</string>
+    <string name="register_error_long_l">The %s entered is too long. %s</string>
+    <string name="register_error_short">The %s entered is too short.</string>
+    <string name="register_error_short_l">The %s entered is too short. %s</string>
+    <string name="register_error_invalid">The %s entered is invalid.</string>
+    <string name="login_error_401">Incorrect email and password.</string>
+    <string name="login_lbl_fingerprint">Fill in the details or place your finger on the fingerprint scanner to log in.</string>
+    <string name="login_lbl_fingerprint_no_lockscreen">Please enable lockscreen security in your device\'s Settings to log in with your fingerprint.</string>
+    <string name="title_my_exams">My Exams</string>
+    <string name="item_me_date">Date: %s</string>
+    <string name="item_me_score">Score: %s</string>
+</resources>
