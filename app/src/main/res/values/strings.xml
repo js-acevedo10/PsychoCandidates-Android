@@ -19,4 +19,6 @@
     <string name="title_my_exams">My Exams</string>
     <string name="item_me_date">Date: %s</string>
     <string name="item_me_score">Score: %s</string>
+    <string name="fingerprint_title">Place your finger in the scanner to unlock the app.</string>
+    <string name="item_me_title">Exam Name</string>
 </resources>
