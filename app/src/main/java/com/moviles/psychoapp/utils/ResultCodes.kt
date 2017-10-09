@@ -7,5 +7,6 @@ package com.moviles.psychoapp.utils
 class ResultCodes {
     companion object {
         const val REGISTER_SUCCESS = 201
+        const val TEST_ACCELEROMETER_FINISH = 202
     }
 }

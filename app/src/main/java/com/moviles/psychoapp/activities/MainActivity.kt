@@ -2,32 +2,40 @@ package com.moviles.psychoapp.activities
 
 import android.Manifest
 import android.annotation.TargetApi
+import android.app.Activity
 import android.app.Dialog
 import android.app.KeyguardManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
+import android.provider.MediaStore
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.hardware.fingerprint.FingerprintManagerCompat
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
 import android.widget.LinearLayout
+import com.google.android.gms.vision.Frame
+import com.google.android.gms.vision.barcode.Barcode
+import com.google.android.gms.vision.barcode.BarcodeDetector
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.moviles.psychoapp.R
 import com.moviles.psychoapp.adapters.MyExamsAdapter
+import com.moviles.psychoapp.utils.BitmapDecoder
 import com.moviles.psychoapp.utils.FingerprintHandler
 import com.moviles.psychoapp.utils.RequestCodes
 import com.moviles.psychoapp.world.BriefExam
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fingerprint_dialog.*
+import java.io.File
 import java.io.IOException
 import java.security.*
 import java.security.cert.CertificateException
@@ -40,17 +48,27 @@ class MainActivity : AppCompatActivity() {
 
     val mAuth = FirebaseAuth.getInstance()
     val myExams = ArrayList<BriefExam>()
-    var myExamsAdapter: MyExamsAdapter? = null
-    private var keyStore: KeyStore? = null
-    // Variable used for storing the key in the Android Keystore container
+    private var myExamsAdapter: MyExamsAdapter? = null
+
+    //Huella
+    private lateinit var keyStore: KeyStore
     private val KEY_NAME = "androidHive"
-    private var cipher: Cipher? = null
+    private lateinit var cipher: Cipher
     private lateinit var dialog: Dialog
+
+    //Barcode Scanner
+    private val detector: BarcodeDetector by lazy {
+        BarcodeDetector.Builder(applicationContext)
+                .setBarcodeFormats(Barcode.DATA_MATRIX or Barcode.QR_CODE)
+                .build()
+    }
+    private lateinit var imageUri: Uri
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         getMyExams()
+        setupFingerprintScanner()
     }
 
     override fun onStart() {
@@ -59,8 +77,11 @@ class MainActivity : AppCompatActivity() {
             goToLogin()
         }
         checkUserIsStillLogged()
-        setupFingerprintScanner()
         super.onStart()
+    }
+
+    override fun onBackPressed() {
+        finish()
     }
 
     private fun getMyExams() {
@@ -75,7 +96,9 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                         if (isUnique) {
-                            myExams.add(ds.getValue(BriefExam::class.java)!!)
+                            val bE = ds.getValue(BriefExam::class.java)!!
+                            bE.id = ds.key
+                            myExams.add(bE)
                             if (myExamsAdapter == null) {
                                 myExamsAdapter = MyExamsAdapter(myExams, R.layout.item_my_exams) {
 
@@ -89,14 +112,32 @@ class MainActivity : AppCompatActivity() {
                     }
                     override fun onCancelled(p0: DatabaseError?) {}
                     override fun onChildMoved(p0: DataSnapshot?, p1: String?) {}
-                    override fun onChildChanged(p0: DataSnapshot?, p1: String?) {}
-                    override fun onChildRemoved(p0: DataSnapshot?) {}
+                    override fun onChildChanged(p0: DataSnapshot, p1: String?) {
+                        for (i in myExams.indices) {
+                            if (myExams[i].id == p0.key) {
+                                val bE = p0.getValue(BriefExam::class.java)!!
+                                bE.id = p0.key
+                                myExams[i] = bE
+                                myExamsAdapter!!.notifyItemChanged(i)
+                                break
+                            }
+                        }
+                    }
+
+                    override fun onChildRemoved(p0: DataSnapshot) {
+                        for (i in myExams.indices) {
+                            if (myExams[i].id == p0.key) {
+                                myExams.removeAt(i)
+                                myExamsAdapter!!.notifyItemRemoved(i)
+                                break
+                            }
+                        }
+                    }
                 }
         )
 
         fab_scan_exam.setOnClickListener {
-            mAuth.signOut()
-            goToLogin()
+            ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), RequestCodes.BARCODE_PERMISSION_CAMERA)
         }
     }
 
@@ -118,6 +159,20 @@ class MainActivity : AppCompatActivity() {
     private fun goToLogin() {
         startActivity(Intent(this@MainActivity, LoginActivity::class.java))
         finish()
+    }
+
+    private fun scanBarcode() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val photo = File(Environment.getExternalStorageDirectory(), "barcode.jpg")
+        imageUri = Uri.fromFile(photo)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+        startActivityForResult(intent, RequestCodes.BARCODE_CAMERA_SCAN)
+    }
+
+    private fun launchMediaScanIntent() {
+        val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+        mediaScanIntent.data = imageUri
+        this.sendBroadcast(mediaScanIntent)
     }
 
     fun hideFingerprintDialog() {
@@ -198,7 +253,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         try {
-            keyStore!!.load(null)
+            keyStore.load(null)
             keyGenerator.init(KeyGenParameterSpec.Builder(KEY_NAME,
                     KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
@@ -229,10 +284,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         try {
-            keyStore!!.load(
-                    null)
-            val key = keyStore!!.getKey(KEY_NAME, null) as SecretKey
-            cipher!!.init(Cipher.ENCRYPT_MODE, key)
+            keyStore.load(null)
+            val key = keyStore.getKey(KEY_NAME, null) as SecretKey
+            cipher.init(Cipher.ENCRYPT_MODE, key)
             return true
         } catch (e: KeyPermanentlyInvalidatedException) {
             return false
@@ -251,11 +305,50 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode) {
+            RequestCodes.BARCODE_CAMERA_SCAN -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    launchMediaScanIntent()
+                    try {
+                        val bitmap = BitmapDecoder.decodeBitmapUri(this@MainActivity, imageUri)
+                        if (detector.isOperational) {
+                            val frame = Frame.Builder().setBitmap(bitmap).build()
+                            val barcodes = detector.detect(frame)
+                            for (index in 0 until barcodes.size()) {
+                                val code = barcodes.valueAt(index)
+                                println("El codigo es ${code.displayValue}")
+                                FirebaseDatabase.getInstance().getReference("exams")
+                                        .child(code.displayValue).addListenerForSingleValueEvent(
+                                        object : ValueEventListener {
+                                            override fun onCancelled(p0: DatabaseError?) {}
+                                            override fun onDataChange(ds: DataSnapshot) {
+                                                if (ds.exists()) {
+                                                    startActivity(Intent(this@MainActivity, ExamDetailsActivity::class.java).putExtra("examId", ds.key))
+                                                }
+                                            }
+                                        }
+                                )
+                            }
+                        }
+                    } catch (e: Exception) {
+
+                    }
+                }
+            }
+        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
             RequestCodes.LOGIN_PERMISSION_FINGERPRINT -> {
-                if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     setupFingerprintScanner()
+                }
+            }
+            RequestCodes.BARCODE_PERMISSION_CAMERA -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    scanBarcode()
                 }
             }
         }

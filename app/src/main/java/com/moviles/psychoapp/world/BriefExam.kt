@@ -7,6 +7,6 @@ import com.google.firebase.database.IgnoreExtraProperties
  */
 
 @IgnoreExtraProperties
-data class BriefExam(val date : String = "N/A", val employer : String = "N/A", val maxScore : Double = 100.0, val name : String = "Exam", val score : Double = 0.0, val time : Double = 0.0) {
-    var id: String = ""
+data class BriefExam(val date: String = "Test Date loading...", val employer: String = "Test employer loading...", val maxScore: Double = 100.0, val name: String = "Exam name loading...", val score: Double = 0.0) {
+    var id: String = "id loading..."
 }

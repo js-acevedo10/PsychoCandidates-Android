@@ -21,4 +21,25 @@
     <string name="item_me_score">Score: %s</string>
     <string name="fingerprint_title">Place your finger in the scanner to unlock the app.</string>
     <string name="item_me_title">Exam Name</string>
+    <string name="exam_details_company">Company Name</string>
+    <string name="exam_details_title">Exam Title</string>
+    <string name="exam_details_description">Exam description.</string>
+    <string name="exam_details_btn_start">Take Exam</string>
+    <string name="exam_details_tests">Test List</string>
+
+    <string name="fragment_test_details_title">Test Name</string>
+    <string name="fragment_test_details_description">Test Description</string>
+    <string name="fragment_test_details_lbl_time">Time:</string>
+    <string name="fragment_test_details_time">1 min</string>
+    <string name="fragment_test_details_lbl_maxscore">Max Score:</string>
+    <string name="fragment_test_details_maxscore">100pts</string>
+    <string name="fragment_test_details_lbl_weight">Weight:</string>
+    <string name="fragment_test_details_weight">30%</string>
+    <string name="fragment_test_details_instructions">Test instructions on the reverse of the package. Call customer service if package is not sealed.</string>
+    <string name="fragment_test_details_btn_start">Start Test</string>
+    <string name="exam_results_lbl_title">Exam Results</string>
+    <string name="exam_results_lbl_name">Exam Name:</string>
+    <string name="exam_results_lbl_date">Exam Date:</string>
+    <string name="exam_results_lbl_score">Exam Score:</string>
+    <string name="exam_results_btn_finish">Mark as done</string>
 </resources>
